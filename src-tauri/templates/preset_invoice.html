@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Invoice {{ invoice.number }}</title>
+<style>
+  @page { size: A4; margin: 1.5cm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    color: #1a1a1a;
+    font-size: 11pt;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 2px solid #1a1a1a; padding-bottom: 12px; margin-bottom: 24px;
+  }
+  .company .logo { max-height: 60px; max-width: 200px; margin-bottom: 8px; display: block; object-fit: contain; }
+  .company .name { font-size: 18pt; font-weight: 700; margin-bottom: 4px; }
+  .company .meta { color: #555; font-size: 9pt; line-height: 1.4; }
+  .qr-block { text-align: center; margin-top: 8px; }
+  .qr-block img { width: 96px; height: 96px; object-fit: contain; }
+  .qr-block .caption { font-size: 8pt; color: #888; margin-top: 4px; }
+  .qr-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+  .qr-grid .qr-item { text-align: center; }
+  .qr-grid .qr-item img { width: 96px; height: 96px; object-fit: contain; }
+  .qr-grid .qr-item .kind { font-size: 9pt; font-weight: 600; margin-top: 4px; }
+  .qr-grid .qr-item .qr-label { font-size: 8pt; color: #888; }
+  .doc-meta { text-align: right; }
+  .doc-meta .title { font-size: 22pt; font-weight: 700; letter-spacing: 2px; }
+  .doc-meta .row { font-size: 10pt; margin-top: 4px; color: #333; }
+  .doc-meta .row strong { display: inline-block; min-width: 64px; color: #1a1a1a; }
+  .doc-meta .status {
+    display: inline-block; margin-top: 6px; padding: 2px 8px; font-size: 9pt;
+    border: 1px solid #1a1a1a; letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  .bill-to { margin-bottom: 18px; }
+  .bill-to .label { font-size: 9pt; color: #888; letter-spacing: 1px; }
+  .bill-to .name { font-size: 13pt; font-weight: 600; margin-top: 4px; }
+  .bill-to .meta { color: #555; font-size: 9pt; line-height: 1.5; margin-top: 4px; white-space: pre-line; }
+
+  table.items { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+  table.items thead th { background: #1a1a1a; color: #fff; font-weight: 600; padding: 8px 10px; text-align: left; font-size: 9pt; letter-spacing: 1px; }
+  table.items thead th.num { width: 6%; text-align: center; }
+  table.items thead th.qty { width: 10%; text-align: right; }
+  table.items thead th.price { width: 16%; text-align: right; }
+  table.items thead th.amt { width: 18%; text-align: right; }
+  table.items tbody td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; vertical-align: top; font-size: 10pt; }
+  table.items tbody td.num { text-align: center; color: #888; }
+  table.items tbody td.qty, table.items tbody td.price, table.items tbody td.amt { text-align: right; font-variant-numeric: tabular-nums; }
+  table.items tbody td .desc { white-space: pre-line; }
+
+  .totals { display: flex; justify-content: flex-end; margin-bottom: 18px; }
+  .totals table { width: 280px; border-collapse: collapse; }
+  .totals td { padding: 4px 6px; font-size: 10pt; }
+  .totals td.label { color: #555; }
+  .totals td.value { text-align: right; font-variant-numeric: tabular-nums; }
+  .totals tr.grand td { font-size: 13pt; font-weight: 700; border-top: 2px solid #1a1a1a; padding-top: 8px; }
+  .totals tr.balance td { font-size: 12pt; font-weight: 600; }
+  .totals tr.balance td.value { color: #b91c1c; }
+  .totals tr.balance.zero td.value { color: #15803d; }
+
+  .footer-block { margin-top: 12px; }
+  .footer-block .label { font-size: 9pt; color: #888; letter-spacing: 1px; margin-bottom: 4px; }
+  .footer-block .body { white-space: pre-line; font-size: 10pt; }
+
+  .pay-info { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-top: 24px; padding-top: 12px; border-top: 1px solid #e0e0e0; }
+  .pay-info .col h4 { font-size: 9pt; color: #888; letter-spacing: 1px; margin: 0 0 6px; font-weight: 600; }
+  .pay-info .methods { font-size: 10pt; }
+  .pay-info .bank { font-size: 9pt; color: #555; }
+  .pay-info .bank .line { margin-top: 4px; }
+
+  table.payments { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 9pt; }
+  table.payments th, table.payments td { padding: 4px 8px; text-align: left; border-bottom: 1px solid #eee; }
+  table.payments th { color: #888; font-weight: 600; }
+  table.payments td.amt { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .thanks { margin-top: 24px; text-align: center; color: #555; font-size: 10pt; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="company">
+    {% if company.logo_data_url %}<img src="{{ company.logo_data_url }}" alt="logo" class="logo">{% endif %}
+    <div class="name">{{ company.company_name }}</div>
+    <div class="meta">{% if company.address %}{{ company.address | nl2br | safe }}<br>{% endif %}{% if company.email %}{{ company.email }}{% endif %}{% if company.phone %}{% if company.email %} · {% endif %}{{ company.phone }}{% endif %}{% if company.entity_type == "Company" and company.ssm_no %}<br>SSM: {{ company.ssm_no }}{% endif %}{% if company.entity_type == "Individual" and company.nric %}<br>NRIC: {{ company.nric }}{% endif %}{% if company.sst_no %} · SST: {{ company.sst_no }}{% endif %}</div>
+  </div>
+  <div class="doc-meta">
+    <div class="title">INVOICE</div>
+    <div class="row"><strong>编号</strong>{{ invoice.number }}</div>
+    <div class="row"><strong>出票日期</strong>{{ invoice.issue_date | date(format="%d %b %Y") }}</div>
+    <div class="row"><strong>到期日</strong>{{ invoice.due_date | date(format="%d %b %Y") }}</div>
+    <div class="status">{{ invoice.status }}</div>
+  </div>
+</div>
+
+<div class="bill-to">
+  <div class="label">BILL TO</div>
+  <div class="name">{{ customer.name }}</div>
+  <div class="meta">{% if customer.address %}{{ customer.address }}
+{% endif %}{% if customer.contact_person %}联系人：{{ customer.contact_person }}
+{% endif %}{% if customer.email %}{{ customer.email }}{% endif %}{% if customer.phone %}{% if customer.email %} · {% endif %}{{ customer.phone }}{% endif %}{% if customer.ssm_no %}
+SSM: {{ customer.ssm_no }}{% endif %}{% if customer.nric %}
+NRIC: {{ customer.nric }}{% endif %}{% if customer.tax_no %} · 税号: {{ customer.tax_no }}{% endif %}</div>
+</div>
+
+<table class="items">
+  <thead>
+    <tr>
+      <th class="num">#</th>
+      <th>描述</th>
+      <th class="qty">数量</th>
+      <th class="price">单价</th>
+      <th class="amt">小计</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for line in lines %}
+    <tr>
+      <td class="num">{{ line.position }}</td>
+      <td><div class="desc">{{ line.description }}</div></td>
+      <td class="qty">{{ line.quantity }}</td>
+      <td class="price">{{ line.unit_price | currency(code=invoice.currency) }}</td>
+      <td class="amt">{{ line.line_total | currency(code=invoice.currency) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<div class="totals">
+  <table>
+    <tr>
+      <td class="label">小计</td>
+      <td class="value">{{ invoice.subtotal | currency(code=invoice.currency) }}</td>
+    </tr>
+    {% if invoice.tax_enabled %}
+    <tr>
+      <td class="label">税额 ({{ invoice.tax_rate * 100 }}%)</td>
+      <td class="value">{{ invoice.tax_amount | currency(code=invoice.currency) }}</td>
+    </tr>
+    {% endif %}
+    <tr class="grand">
+      <td class="label">合计</td>
+      <td class="value">{{ invoice.total | currency(code=invoice.currency) }}</td>
+    </tr>
+    {% if invoice.paid_amount > 0 %}
+    <tr>
+      <td class="label">已付</td>
+      <td class="value">{{ invoice.paid_amount | currency(code=invoice.currency) }}</td>
+    </tr>
+    <tr class="balance{% if invoice.balance <= 0 %} zero{% endif %}">
+      <td class="label">余额</td>
+      <td class="value">{{ invoice.balance | currency(code=invoice.currency) }}</td>
+    </tr>
+    {% endif %}
+  </table>
+</div>
+
+<div class="pay-info">
+  <div class="col">
+    {% if selected_static_methods | length > 0 or selected_bank_accounts | length > 0 or selected_qrs | length > 0 %}
+    <h4>PAYMENT METHODS</h4>
+    {% if selected_static_methods | length > 0 %}
+    <div class="methods">{{ selected_static_methods | join(sep=" · ") }}</div>
+    {% endif %}
+    {% if selected_bank_accounts | length > 0 %}
+    <div class="bank">
+      {% for ba in selected_bank_accounts %}
+      <div class="line">{{ ba.bank_name }} · {{ ba.account_number }} ({{ ba.account_holder }})</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if selected_qrs | length > 0 %}
+    <div class="qr-grid">
+      {% for q in selected_qrs %}
+      <div class="qr-item">
+        <img src="{{ q.data_url }}" alt="{{ q.kind }} QR">
+        <div class="kind">{{ q.kind }}</div>
+        {% if q.label %}<div class="qr-label">{{ q.label }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+  <div class="col">
+    {% if payments | length > 0 %}
+    <h4>PAYMENT HISTORY</h4>
+    <table class="payments">
+      <thead><tr><th>编号</th><th>日期</th><th class="amt">金额</th></tr></thead>
+      <tbody>
+        {% for pv in payments %}
+        <tr>
+          <td>{{ pv.number }}</td>
+          <td>{{ pv.date | date(format="%d %b %Y") }}</td>
+          <td class="amt">{{ pv.amount | currency(code=invoice.currency) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+{% if invoice.notes %}
+<div class="footer-block">
+  <div class="label">NOTES</div>
+  <div class="body">{{ invoice.notes }}</div>
+</div>
+{% endif %}
+
+{% if invoice.terms %}
+<div class="footer-block">
+  <div class="label">TERMS</div>
+  <div class="body">{{ invoice.terms }}</div>
+</div>
+{% endif %}
+
+<div class="thanks">— Thank you for your business —</div>
+
+</body>
+</html>

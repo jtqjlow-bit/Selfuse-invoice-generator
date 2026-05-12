@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Payment Voucher {{ pv.number }}</title>
+<style>
+  @page { size: A4; margin: 1.5cm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    color: #1a1a1a;
+    font-size: 11pt;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 2px solid #1a1a1a; padding-bottom: 12px; margin-bottom: 24px;
+  }
+  .company .logo { max-height: 60px; max-width: 200px; margin-bottom: 8px; display: block; object-fit: contain; }
+  .company .name { font-size: 18pt; font-weight: 700; margin-bottom: 4px; }
+  .company .meta { color: #555; font-size: 9pt; line-height: 1.4; }
+  .doc-meta { text-align: right; }
+  .doc-meta .title { font-size: 20pt; font-weight: 700; letter-spacing: 2px; }
+  .doc-meta .row { font-size: 10pt; margin-top: 4px; color: #333; }
+  .doc-meta .row strong { display: inline-block; min-width: 64px; color: #1a1a1a; }
+
+  .received-from { margin-bottom: 18px; }
+  .received-from .label, .invoice-ref .label, .amount-block .label, .method-block .label, .notes-block .label {
+    font-size: 9pt; color: #888; letter-spacing: 1px;
+  }
+  .received-from .name { font-size: 14pt; font-weight: 600; margin-top: 4px; }
+  .received-from .meta { color: #555; font-size: 9pt; line-height: 1.5; margin-top: 4px; white-space: pre-line; }
+
+  .invoice-ref { margin-bottom: 18px; padding: 10px 12px; background: #f5f5f5; border-left: 3px solid #1a1a1a; }
+  .invoice-ref .label { color: #666; }
+  .invoice-ref .ref-line { font-size: 11pt; margin-top: 4px; }
+  .invoice-ref .ref-line strong { font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+  .amount-block {
+    margin: 28px 0; padding: 20px 24px;
+    background: #1a1a1a; color: #fff;
+  }
+  .amount-block .label { color: #aaa; }
+  .amount-block .amount {
+    font-size: 32pt; font-weight: 700; margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .grid-two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .grid-two .value { font-size: 12pt; margin-top: 4px; }
+
+  .notes-block { margin-top: 12px; }
+  .notes-block .body { white-space: pre-line; font-size: 10pt; margin-top: 4px; }
+
+  .signature {
+    margin-top: 60px;
+    display: flex; justify-content: space-between;
+  }
+  .signature .block { width: 45%; }
+  .signature .line { border-top: 1px solid #1a1a1a; padding-top: 4px; }
+  .signature .name { font-size: 9pt; color: #888; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="company">
+    {% if company.logo_data_url %}<img src="{{ company.logo_data_url }}" alt="logo" class="logo">{% endif %}
+    <div class="name">{{ company.company_name }}</div>
+    <div class="meta">{% if company.address %}{{ company.address | nl2br | safe }}<br>{% endif %}{% if company.email %}{{ company.email }}{% endif %}{% if company.phone %}{% if company.email %} · {% endif %}{{ company.phone }}{% endif %}{% if company.entity_type == "Company" and company.ssm_no %}<br>SSM: {{ company.ssm_no }}{% endif %}{% if company.entity_type == "Individual" and company.nric %}<br>NRIC: {{ company.nric }}{% endif %}</div>
+  </div>
+  <div class="doc-meta">
+    <div class="title">PAYMENT VOUCHER</div>
+    <div class="row"><strong>编号</strong>{{ pv.number }}</div>
+    <div class="row"><strong>日期</strong>{{ pv.date | date(format="%d %b %Y") }}</div>
+  </div>
+</div>
+
+<div class="received-from">
+  <div class="label">RECEIVED FROM</div>
+  <div class="name">{{ customer.name }}</div>
+  <div class="meta">{% if customer.address %}{{ customer.address }}
+{% endif %}{% if customer.ssm_no %}SSM: {{ customer.ssm_no }}{% endif %}{% if customer.nric %}NRIC: {{ customer.nric }}{% endif %}</div>
+</div>
+
+{% if invoice %}
+<div class="invoice-ref">
+  <div class="label">PAYMENT FOR INVOICE</div>
+  <div class="ref-line"><strong>{{ invoice.number }}</strong> · 合计 {{ invoice.total | currency(code=pv.currency) }} · 出票日期 {{ invoice.issue_date | date(format="%d %b %Y") }}</div>
+</div>
+{% endif %}
+
+<div class="amount-block">
+  <div class="label">AMOUNT RECEIVED</div>
+  <div class="amount">{{ pv.amount | currency(code=pv.currency) }}</div>
+</div>
+
+<div class="grid-two">
+  <div class="method-block">
+    <div class="label">PAYMENT METHOD</div>
+    <div class="value">{{ pv.payment_method }}</div>
+  </div>
+  {% if invoice %}
+  <div class="method-block">
+    <div class="label">INVOICE BALANCE AFTER THIS PAYMENT</div>
+    <div class="value">{{ balance_after | currency(code=pv.currency) }}</div>
+  </div>
+  {% endif %}
+</div>
+
+{% if pv.notes %}
+<div class="notes-block">
+  <div class="label">NOTES</div>
+  <div class="body">{{ pv.notes }}</div>
+</div>
+{% endif %}
+
+<div class="signature">
+  <div class="block">
+    <div class="line">&nbsp;</div>
+    <div class="name">Received By</div>
+  </div>
+  <div class="block">
+    <div class="line">&nbsp;</div>
+    <div class="name">Authorized Signature</div>
+  </div>
+</div>
+
+</body>
+</html>
