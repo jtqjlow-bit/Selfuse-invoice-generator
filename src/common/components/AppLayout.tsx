@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import { getVersion } from "@tauri-apps/api/app";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -14,9 +16,17 @@ const navItems = [
 ];
 
 export function AppLayout() {
+  const [version, setVersion] = useState("");
+
+  useEffect(() => {
+    getVersion()
+      .then(setVersion)
+      .catch(() => setVersion(""));
+  }, []);
+
   return (
     <div className="flex h-screen bg-background text-foreground">
-      <aside className="w-48 shrink-0 overflow-y-auto border-r border-border bg-card p-4">
+      <aside className="flex w-48 shrink-0 flex-col overflow-y-auto border-r border-border bg-card p-4">
         <h2 className="mb-4 text-sm font-semibold text-muted-foreground">
           Invoice System
         </h2>
@@ -38,6 +48,9 @@ export function AppLayout() {
             </NavLink>
           ))}
         </nav>
+        <div className="mt-auto pt-4 text-xs text-muted-foreground">
+          {version && <span>v{version}</span>}
+        </div>
       </aside>
       <main className="flex-1 overflow-auto">
         <Outlet />
