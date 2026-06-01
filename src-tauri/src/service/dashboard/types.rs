@@ -2,16 +2,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::domain::invoice::Invoice;
-
-/// One row of `currency → amount`. Aggregates are returned as a list because
-/// docs in this app can be in mixed currencies (MYR + USD etc.); summing them
-/// would be wrong.
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/types/bindings/")]
-pub struct CurrencyAmount {
-    pub currency: String,
-    pub amount: f64,
-}
+use crate::service::report::CurrencyAmount;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/types/bindings/")]

@@ -6,8 +6,9 @@ use crate::domain::invoice::{self, InvoiceStatus};
 use crate::domain::payment_voucher;
 use crate::error::AppResult;
 use crate::infra::Db;
+use crate::service::report::CurrencyAmount;
 
-use super::types::{CurrencyAmount, DashboardData};
+use super::types::DashboardData;
 
 pub fn get_dashboard_data(db: &Db) -> AppResult<DashboardData> {
     let today = Utc::now().date_naive();

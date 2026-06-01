@@ -9,6 +9,7 @@ const navItems = [
   { to: "/payment-vouchers", label: "Payment Voucher" },
   { to: "/templates", label: "PDF 模板" },
   { to: "/business-profiles", label: "公司资料" },
+  { to: "/report", label: "报表" },
   { to: "/backup", label: "备份 / 恢复" },
 ];
 

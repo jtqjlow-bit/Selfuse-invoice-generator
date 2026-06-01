@@ -106,6 +106,9 @@ pub fn run() {
             service::backup_restore::commands::backup_export_zip,
             service::backup_restore::commands::backup_restore_zip,
             service::dashboard::commands::dashboard_get_data,
+            service::report::commands::report_monthly_revenue,
+            service::report::commands::report_yearly_revenue,
+            service::report::commands::report_outstanding_invoices,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
