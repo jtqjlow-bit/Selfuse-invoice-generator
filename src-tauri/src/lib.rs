@@ -109,6 +109,10 @@ pub fn run() {
             service::report::commands::report_monthly_revenue,
             service::report::commands::report_yearly_revenue,
             service::report::commands::report_outstanding_invoices,
+            service::currency::commands::currency_get_rate,
+            service::currency::commands::currency_convert,
+            service::currency::commands::currency_refresh,
+            service::currency::commands::currency_list_cached,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
