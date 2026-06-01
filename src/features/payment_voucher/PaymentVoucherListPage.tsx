@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { paymentVoucherApi } from "@/api/payment_voucher";
+import { ListFilterBar } from "@/common/components/ListFilterBar";
 import { customerSnapshotName, formatErr, formatMoney } from "@/common/utils/format";
+import { inDateRange, matchesSearch } from "@/common/utils/listFilter";
 import type { PaymentVoucher } from "@/types/bindings/PaymentVoucher";
 
 export function PaymentVoucherListPage() {
@@ -10,6 +12,10 @@ export function PaymentVoucherListPage() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
   useEffect(() => {
     paymentVoucherApi
       .list()
@@ -17,6 +23,23 @@ export function PaymentVoucherListPage() {
       .catch((e) => setError(formatErr(e)))
       .finally(() => setLoading(false));
   }, []);
+
+  const filtered = useMemo(
+    () =>
+      items.filter((pv) => {
+        const name = customerSnapshotName(pv.customer_snapshot);
+        if (!matchesSearch(name, pv.amount, search)) return false;
+        if (!inDateRange(pv.date, dateFrom, dateTo)) return false;
+        return true;
+      }),
+    [items, search, dateFrom, dateTo],
+  );
+
+  const resetFilters = () => {
+    setSearch("");
+    setDateFrom("");
+    setDateTo("");
+  };
 
   return (
     <div className="p-8">
@@ -40,21 +63,37 @@ export function PaymentVoucherListPage() {
           还没有 Payment Voucher。点右上角"+ 新增 PV"开始。
         </p>
       ) : (
-        <div className="overflow-hidden rounded-md border border-border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-left text-muted-foreground">
-              <tr>
-                <th className="px-3 py-2 font-medium">编号</th>
-                <th className="px-3 py-2 font-medium">日期</th>
-                <th className="px-3 py-2 font-medium">客户</th>
-                <th className="px-3 py-2 text-right font-medium">金额</th>
-                <th className="px-3 py-2 font-medium">付款方式</th>
-                <th className="px-3 py-2 font-medium">关联 Invoice</th>
-                <th className="px-3 py-2 font-medium">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((pv) => (
+        <>
+          <ListFilterBar
+            search={search}
+            onSearch={setSearch}
+            dateLabel="日期"
+            dateFrom={dateFrom}
+            onDateFrom={setDateFrom}
+            dateTo={dateTo}
+            onDateTo={setDateTo}
+            onReset={resetFilters}
+            resultCount={filtered.length}
+            totalCount={items.length}
+          />
+          {filtered.length === 0 ? (
+            <p className="text-muted-foreground">没有匹配的 Payment Voucher。</p>
+          ) : (
+            <div className="overflow-hidden rounded-md border border-border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted text-left text-muted-foreground">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">编号</th>
+                    <th className="px-3 py-2 font-medium">日期</th>
+                    <th className="px-3 py-2 font-medium">客户</th>
+                    <th className="px-3 py-2 text-right font-medium">金额</th>
+                    <th className="px-3 py-2 font-medium">付款方式</th>
+                    <th className="px-3 py-2 font-medium">关联 Invoice</th>
+                    <th className="px-3 py-2 font-medium">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((pv) => (
                 <tr key={pv.id} className="border-t border-border">
                   <td className="px-3 py-2 font-mono">{pv.number}</td>
                   <td className="px-3 py-2 text-muted-foreground">{pv.date}</td>
@@ -88,10 +127,12 @@ export function PaymentVoucherListPage() {
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
