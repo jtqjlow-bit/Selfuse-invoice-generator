@@ -49,7 +49,7 @@ invoice-system/
 │   │   ├── quotation.ts
 │   │   ├── invoice.ts
 │   │   ├── payment_voucher.ts
-│   │   ├── company_settings.ts
+│   │   ├── business_profile.ts
 │   │   ├── pdf_template.ts
 │   │   ├── currency.ts
 │   │   ├── numbering.ts
@@ -117,7 +117,7 @@ invoice-system/
 │       │   │   └── tests.rs
 │       │   ├── invoice/
 │       │   ├── payment_voucher/
-│       │   ├── company_settings/
+│       │   ├── business_profile/
 │       │   └── pdf_template/
 │       │
 │       └── service/                # 跨域服务层（无 DB 表或独立缓存表）
@@ -228,7 +228,7 @@ tauri::Builder::default()
 | `invoice` | `domain::invoice` | `domain::invoice::*` |
 | `invoice_line_item` | `domain::invoice` | 内部表，不对外 |
 | `payment_voucher` | `domain::payment_voucher` | `domain::payment_voucher::*` |
-| `company_settings` | `domain::company_settings` | `domain::company_settings::get()` / `update()` |
+| `business_profile` | `domain::business_profile` | `domain::business_profile::find_by_id()` / `list()` 等 |
 | `pdf_template` | `domain::pdf_template` | `domain::pdf_template::*` |
 | `numbering_counter` | `service::numbering` | `service::numbering::next()` / `peek()` 等 |
 | `exchange_rate_cache` | `service::currency` | `service::currency::get_rate()` / `convert()` |
@@ -387,21 +387,31 @@ src-tauri infra/*       → 不依赖任何业务模块
 - 公开函数：`create / update / delete / find_by_id / list / list_by_invoice / list_by_customer / sum_by_invoice`
 - 依赖：`domain::customer`、`domain::invoice`
 
-### 6.8 `domain::company_settings`
+### 6.8 `domain::business_profile`
 
-- **拥有的表**：`company_settings`（**单条记录，id 永远 1**）
+- **拥有的表**：`business_profile`（**多条记录**；每张 Quotation / Invoice / Payment Voucher 通过 `business_profile_id` 选定开单主体）
+- 历史：原为单条 `company_settings`（id 永远 1），迁移 `0011` 改为多记录 `business_profile`，旧表数据丢弃
 - 字段：
-  - 公司名 / 地址 / Email / 电话 / SSM 号 / SST 号
-  - `logo_path: Option<String>`
-  - `qr_path: Option<String>` (FPX / DuitNow 固定 QR)
-  - `bank_accounts: serde_json::Value`
-  - `enabled_payment_methods: serde_json::Value`
+  - `id: String` (UUID, PK)
+  - `entity_type: EntityType` (`Company | Individual`)
+  - `name: String`（公司名或个人名，取决于 entity_type）
+  - `address / email / phone: Option<String>`
+  - `ssm_no: Option<String>` (Company 必填)
+  - `nric: Option<String>` (Individual 必填)
+  - `sst_no: Option<String>`
+  - `logo_path: Option<String>`（拷贝到 `<data_dir>/assets/`，仅 Company）
+  - `qr_path: Option<String>`（遗留单 QR 字段，仅迁移用；新代码用 `qrs`）
+  - `bank_accounts: Vec<BankAccount>`（`{ id, bank_name, account_number, account_holder }`）
+  - `qrs: Vec<Qr>`（多 QR：`{ id, kind, label, file_path }`，kind = `Bank | Tng | Boost | GrabPay | Other`）
+  - `enabled_payment_methods: Vec<String>`
   - `default_tax_rate: Option<f64>`
   - `default_quotation_valid_days: i32` (默认 30)
-  - `default_invoice_due_days: i32`
+  - `default_invoice_due_days: i32` (默认 30)
   - `data_dir: String` (PDF 输出目录等)
-- 公开函数：`get() / update()`
-- 依赖：无
+  - `created_at, updated_at: String`
+- 公开函数：`create / update / delete / find_by_id / list`
+- 公开 Tauri 命令：`business_profile_*`（含 `set_logo / clear_logo / set_qr / clear_qr / add_qr / remove_qr / update_qr_label / get_asset_data_urls`）
+- 依赖：`infra::file_system`（拷贝 logo / QR 图片资源）
 
 ### 6.9 `domain::pdf_template`
 
