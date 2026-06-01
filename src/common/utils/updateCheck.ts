@@ -5,8 +5,8 @@
 //   GITHUB_REPO  = "invoice-generator"
 // 在没配置（仍是 YOUR_ 开头）之前，检查更新会静默跳过，不影响使用。
 // ============================================================================
-const GITHUB_OWNER = "YOUR_GITHUB_OWNER";
-const GITHUB_REPO = "YOUR_GITHUB_REPO";
+const GITHUB_OWNER = "jtqjlow-bit";
+const GITHUB_REPO = "Selfuse-invoice-generator";
 
 export interface UpdateInfo {
   /** Latest version without the leading "v", e.g. "0.2.0". */
