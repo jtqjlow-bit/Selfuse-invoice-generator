@@ -39,6 +39,15 @@ fn fresh_cache_hit_avoids_network() {
 }
 
 #[test]
+#[ignore = "hits the live Frankfurter API"]
+fn live_fetch_caches_rate() {
+    let (_dir, db) = fresh_db();
+    let rate = service::get_rate(&db, "USD", "MYR").unwrap();
+    assert!(rate > 0.0);
+    assert_eq!(service::list_cached(&db).unwrap().len(), 1);
+}
+
+#[test]
 fn list_cached_returns_rows() {
     let (_dir, db) = fresh_db();
     let now = Utc::now().to_rfc3339();

@@ -8,7 +8,9 @@ use crate::infra::Db;
 use super::repository;
 use super::types::ExchangeRate;
 
-const API_LATEST: &str = "https://api.exchangerate.host/latest";
+// Frankfurter: free, no API key, ECB-sourced. Covers ~31 major fiat
+// currencies (MYR, USD, SGD, CNY, EUR, GBP, JPY, …) — no crypto/exotic.
+const API_LATEST: &str = "https://api.frankfurter.dev/v1/latest";
 const CACHE_TTL_HOURS: i64 = 24;
 
 #[derive(serde::Deserialize)]
@@ -47,7 +49,7 @@ fn fetch_rate(from: &str, to: &str) -> AppResult<f64> {
 }
 
 /// Latest rate from `from` to `to`. Returns cached value when fresh (<24h),
-/// otherwise fetches from exchangerate.host and updates the cache.
+/// otherwise fetches from the Frankfurter API and updates the cache.
 pub fn get_rate(db: &Db, from: &str, to: &str) -> AppResult<f64> {
     let from = normalize(from)?;
     let to = normalize(to)?;
