@@ -678,7 +678,7 @@ export function InvoiceFormPage() {
                     <div className="mb-1 text-xs font-medium text-muted-foreground">
                       银行账户
                     </div>
-                    <div className="space-y-1">
+                    <div className="flex flex-wrap gap-3">
                       {banks.map((b) => (
                         <label
                           key={b.id}
@@ -711,7 +711,7 @@ export function InvoiceFormPage() {
                     <div className="mb-1 text-xs font-medium text-muted-foreground">
                       QR
                     </div>
-                    <div className="space-y-1">
+                    <div className="flex flex-wrap gap-3">
                       {qrs.map((q) => (
                         <label
                           key={q.id}
