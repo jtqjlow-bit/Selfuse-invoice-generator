@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { getVersion } from "@tauri-apps/api/app";
 import { cn } from "@/lib/utils";
+import { UpdateNotice } from "@/common/components/UpdateNotice";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard" },
@@ -50,6 +51,7 @@ export function AppLayout() {
         </nav>
         <div className="mt-auto pt-4 text-xs text-muted-foreground">
           {version && <span>v{version}</span>}
+          <UpdateNotice currentVersion={version} />
         </div>
       </aside>
       <main className="flex-1 overflow-auto">
