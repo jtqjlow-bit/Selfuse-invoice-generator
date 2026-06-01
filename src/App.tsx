@@ -15,7 +15,6 @@ import {
 } from "@/features/business-profiles";
 import { BackupPage } from "@/features/backup";
 import { ReportPage } from "@/features/report";
-import { SettingsPage } from "@/features/settings";
 
 function App() {
   return (
@@ -59,7 +58,6 @@ function App() {
             element={<BusinessProfileFormPage />}
           />
           <Route path="/report" element={<ReportPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/backup" element={<BackupPage />} />
         </Route>
       </Routes>

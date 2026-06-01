@@ -109,10 +109,6 @@ pub fn run() {
             service::report::commands::report_monthly_revenue,
             service::report::commands::report_yearly_revenue,
             service::report::commands::report_outstanding_invoices,
-            service::currency::commands::currency_get_rate,
-            service::currency::commands::currency_convert,
-            service::currency::commands::currency_refresh,
-            service::currency::commands::currency_list_cached,
             service::import_export::commands::import_customers_csv,
             service::import_export::commands::export_all_excel,
         ])

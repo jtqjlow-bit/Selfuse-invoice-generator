@@ -10,7 +10,6 @@ const navItems = [
   { to: "/templates", label: "PDF 模板" },
   { to: "/business-profiles", label: "公司资料" },
   { to: "/report", label: "报表" },
-  { to: "/settings", label: "设置 / 汇率" },
   { to: "/backup", label: "备份 / 恢复" },
 ];
 

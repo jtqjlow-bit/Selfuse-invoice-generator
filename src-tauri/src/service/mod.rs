@@ -1,5 +1,4 @@
 pub mod backup_restore;
-pub mod currency;
 pub mod dashboard;
 pub mod import_export;
 pub mod numbering;

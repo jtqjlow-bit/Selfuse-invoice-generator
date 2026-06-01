@@ -62,11 +62,6 @@ const MIGRATIONS: &[(i32, &str, &str)] = &[
         "multi_qr_invoice_picker",
         include_str!("../../migrations/0012_multi_qr_invoice_picker.sql"),
     ),
-    (
-        13,
-        "exchange_rate_cache",
-        include_str!("../../migrations/0013_exchange_rate_cache.sql"),
-    ),
 ];
 
 pub struct Db {
